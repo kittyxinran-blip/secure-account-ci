@@ -1,0 +1,35 @@
+name: Security tests and Docker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Download code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Run security tests
+        run: python -m unittest discover -v
+
+      - name: Build Docker image
+        run: docker build -t secure-account-demo .
+
+      - name: Run tests inside Docker
+        run: docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges secure-account-demo
+
+      - name: Run demonstration inside Docker
+        run: docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges secure-account-demo python demo.py
